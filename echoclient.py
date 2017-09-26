@@ -1,72 +1,126 @@
 import socket
-import sys
-import argparse
+import os
+import pygubu
 import tkinter
 
-
-def send_request(host, port, request, responsefield):
-    conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    try:
-        line = request.rstrip("\r\n") + " HTTP/1.0\r\n" \
-        + "Host: " + host + "\r\n" \
-        + "Content-Type: application/json\r\n" \
-        + "Content-Length: 17\r\n\r\n{'Assignment': 1}"
-        conn.connect((host, int(port)))
-        print("connected")
-        print(line)
-        newrequest = line.encode("utf-8")
-        conn.send(newrequest)
-        # MSG_WAITALL waits for full request or error
-        message = conn.recv(4096)
-        # responsefield.configure(text=str(message.decode("utf-8")))
-        sys.stdout.write("Replied: " + message.decode("utf-8"))
-    finally:
-        conn.close()
+CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
 
-window = tkinter.Tk()
-window.title("Jacques' Requests")
-window.resizable(width=False, height=False)
+class MyApplication(pygubu.TkApplication):
+    def _create_ui(self):
+        self.builder = builder = pygubu.Builder()
 
-tkinter.Frame(height=5, relief=tkinter.SUNKEN).grid(row=0)
-tkinter.Frame(width=5, relief=tkinter.SUNKEN).grid(column=0)
+        builder.add_from_file(os.path.join(CURRENT_DIR, '445_a1.ui'))
 
-cmdlabel = tkinter.Label(window, text="Request: ").grid(row=1, column=1, sticky="W")
-request = tkinter.Entry(window, width=100)
-request.grid(row=1, column=2, columnspan=2, sticky="W")
+        self.mainwindow = builder.get_object('mainwindow')
+        self.request = builder.get_object('req_entry')
+        self.host = builder.get_object('host_entry')
+        self.port = builder.get_object('port_entry')
+        self.response = builder.get_object('resp_text')
+        self.popular = builder.get_object("pop_text")
+        self.message = builder.get_object('msg_entry')
+        self.message.configure(foreground="gray")
 
-tkinter.Frame(height=5, relief=tkinter.SUNKEN).grid(row=2)
+        builder.connect_callbacks(self)
 
-hostlabel = tkinter.Label(window, text="Host: ").grid(row=3, column=1, sticky="W")
-host = tkinter.Entry(window, width=20)
-host.grid(row=3, column=2, sticky="W")
+    def quit(self):
+        self.mainwindow.quit()
 
-tkinter.Frame(height=5, relief=tkinter.SUNKEN).grid(row=4)
+    def clear(self):
+        self.response.delete("1.0", tkinter.END)
+        self.message.configure(text="Enter a request, host, and port. Send the request to receive a reponse",
+                               foreground="gray")
 
-portlabel = tkinter.Label(window, text="Port: ").grid(row=5, column=1, sticky="W")
-port = tkinter.Entry(window, width=10)
-port.grid(row=5, column=2, sticky="W")
+    def run(self):
+        self.mainwindow.mainloop()
 
-tkinter.Frame(height=5, relief=tkinter.SUNKEN).grid(row=8)
+    def help_request(self, contents):
+        response = ""
 
-responselabel = tkinter.Label(window, text="Response: ").grid(row=9, column=1, sticky="W")
-response = tkinter.Text(window, width=75, height=20)
-response.grid(row=9, column=2, columnspan=2, sticky="W")
+        print(len(contents))
 
-tkinter.Frame(height=5, relief=tkinter.SUNKEN).grid(row=6)
+        if len(contents) == 2:
+            response = "httpc help\n\nhttpc is a curl-like application but supports HTTP protocol only.\n"\
+                    + "Usage: \n\thttpc command [arguments]\n"\
+                    + "The commands are:\n"\
+                    + "\tget\texecutes a HTTP GET request and prints the response.\n"\
+                    + "\tpost\texecutes a HTTP POST request and prints the response.\n"\
+                    + "\thelp\tprints this screen.\n\n"\
+                    + "Use 'httpc help [command]' for more information about a command.\n\n"
+        elif contents[2].lower() == "get":
+            response = "Usage: httpc get [-v] [-h key:value] URL\r\n\r\n"\
+                        + "Get executes a HTTP GET request for a given URL.\r\n\r\n"\
+                        + "\t-v\tprints the detail of the response such as protocol, status, and headers.\n\r\n\r"\
+                        + "\t-h key:value\tassociates headers to HTTP request with the format 'key:value'.\n\n"
 
-sendbutton = tkinter.Button(window, text="Send Request",
-                            width=20, command=lambda: send_request(
-                                            host.get(),
-                                            port.get(),
-                                            request.get(),
-                                            response))
-sendbutton.grid(row=7, column=2)
+        response += "--------------------------------------------------------------------------\n\n"
 
-clearbutton = tkinter.Button(window, text="Clear All", width=20)
-clearbutton.grid(row=7, column=3)
+        self.response.insert(tkinter.END, response)
 
-tkinter.Frame(height=5, relief=tkinter.SUNKEN).grid(row=10)
-tkinter.Frame(width=5, relief=tkinter.SUNKEN).grid(column=4)
+    def get_request(self, contents):
+        request = ""
 
-window.mainloop()
+        contents[1] = "GET"
+
+        for content in contents:
+            request += str(content) + " "
+
+        return request
+
+    def post_request(self, contents):
+        request = ""
+
+        return request
+
+    def send_request(self):
+        goodrequest = nothelp = True
+        conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+
+        try:
+            line = self.request.get().rstrip("\r\n")
+            contents = line.split(" ")
+
+            print(contents[1])
+
+            if contents[0].lower() == "httpc":
+                if contents[1].lower() == "help":
+                    self.help_request(contents)
+                    nothelp = False
+                elif contents[1].lower() == "get":
+                    request = self.get_request(contents)
+                elif contents[1].lower() == "post":
+                    request = self.post_request(contents)
+                else:
+                    print("2")
+                    goodrequest = False
+            else:
+                goodrequest = False
+                print("1")
+
+            if goodrequest and nothelp:
+                request += "HTTP/1.0\r\nHost: " + str(self.host.get()) + "\r\n\r\n"
+                self.message.configure(text="Request accepted", foreground="green")
+                # line = self.request.get().rstrip("\r\n") + "HTTP/1.0\r\nHost: " + self.host.get() + "\r\n\r\n"
+                #        # + "\r\n" + "Content-Type: application/json\r\n"\
+                #        # + "Content-Length: 17\r\n\r\n{'Assignment': 1}"
+                conn.connect((self.host.get(), int(self.port.get())))
+                print(request)
+                request = request.encode("utf-8")
+                conn.send(request)
+                # MSG_WAITALL waits for full request or error
+                message = conn.recv(4096)
+                response = message.decode("utf-8")
+                response += "\n\n--------------------------------------------------------------------------\n\n"
+                self.response.insert(tkinter.END, str() + "\r\n")
+            else:
+                self.message.configure(text="Request not accepted", foreground="red")
+        finally:
+            conn.close()
+
+
+if __name__ == '__main__':
+    root = tkinter.Tk()
+    root.resizable(width=False, height=False)
+    root.title("Jacques' Request System")
+    app = MyApplication(root)
+    app.run()
