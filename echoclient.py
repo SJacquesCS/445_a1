@@ -2,6 +2,7 @@ import socket
 import os
 import pygubu
 import tkinter
+import sys
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -40,34 +41,62 @@ class MyApplication(pygubu.TkApplication):
         print(len(contents))
 
         if len(contents) == 2:
-            response = "httpc help\n\nhttpc is a curl-like application but supports HTTP protocol only.\n"\
-                    + "Usage: \n\thttpc command [arguments]\n"\
-                    + "The commands are:\n"\
-                    + "\tget\texecutes a HTTP GET request and prints the response.\n"\
-                    + "\tpost\texecutes a HTTP POST request and prints the response.\n"\
-                    + "\thelp\tprints this screen.\n\n"\
-                    + "Use 'httpc help [command]' for more information about a command.\n\n"
+            response = "httpc is a curl-like application but supports HTTP protocol only.\n\n" \
+                       + "Usage: httpc command [arguments]\n\n" \
+                       + "The commands are:\n" \
+                       + "\tget\texecutes a HTTP GET request and prints the response.\n" \
+                       + "\tpost\texecutes a HTTP POST request and prints the response.\n" \
+                       + "\thelp\tprints this screen.\n\n" \
+                       + "Use 'httpc help [command]' for more information about a command.\n\n"
         elif contents[2].lower() == "get":
-            response = "Usage: httpc get [-v] [-h key:value] URL\r\n\r\n"\
-                        + "Get executes a HTTP GET request for a given URL.\r\n\r\n"\
-                        + "\t-v\tprints the detail of the response such as protocol, status, and headers.\n\r\n\r"\
-                        + "\t-h key:value\tassociates headers to HTTP request with the format 'key:value'.\n\n"
+            response = "Usage: httpc get [-v] [-h key:value] URL\n\n" \
+                       + "Get executes a HTTP GET request for a given URL.\n\n" \
+                       + "\t-v\tPrints the detail of the response such as protocol, status, and headers.\n" \
+                       + "\t-h key:value\t\tAssociates headers to HTTP request with the format 'key:value'.\n"
+        elif contents[2].lower() == "post":
+            response = "Usage: httpc  httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL\n\n" \
+                       + "Post executes a HTTP POST request for a given URL with inline data or from file.\n\n" \
+                       + "\t-v\tPrints the detail of the response such as protocol, status, and headers.\n" \
+                       + "\t-h key:value\t\tAssociates headers to HTTP request with the format 'key:value'.\n" \
+                       + "\t-d string\t\tAssociates an inline data to the body HTTP POST request.\n" \
+                       + "\t-f file\t\tAssociates the content of a file to the body HTTP POST request.\n\n" \
+                       + "Either [-d] or [-f] can be used but not both.\n\n"
 
         response += "--------------------------------------------------------------------------\n\n"
 
         self.response.insert(tkinter.END, response)
 
-    def get_request(self, contents):
+    def get_request(self, contents, conn):
         request = ""
+        verbose = False
+        headers = False
+        print('in get')
 
         contents[1] = "GET"
+
+        # CHECK HERE FOR BUGS AND SHIT
+
+        # if len(contents) > 2 and contents[2] == "-v":
+        #     verbose = True
+        #
+        # if contents[2] == "-h" or contents[3] == "-h":
+        #     headers = True
+
+        contents.pop(0)
 
         for content in contents:
             request += str(content) + " "
 
-        return request
+        request += "HTTP/1.0\r\nHost: " + str(self.host.get()) + "\r\n\r\n"
+        conn.connect((self.host.get(), int(self.port.get())))
+        request = request.encode("utf-8")
+        conn.send(request)
+        message = conn.recv(4096)
+        response = message.decode("utf-8")
+        response += "\n\n--------------------------------------------------------------------------\n\n"
+        self.response.insert(tkinter.END, str(response)) n
 
-    def post_request(self, contents):
+    def post_request(self, contents, conn):
         request = ""
 
         return request
@@ -77,8 +106,7 @@ class MyApplication(pygubu.TkApplication):
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
-            line = self.request.get().rstrip("\r\n")
-            contents = line.split(" ")
+            contents = self.request.get().rstrip("\r\n").split(" ")
 
             print(contents[1])
 
@@ -87,31 +115,19 @@ class MyApplication(pygubu.TkApplication):
                     self.help_request(contents)
                     nothelp = False
                 elif contents[1].lower() == "get":
-                    request = self.get_request(contents)
+                    self.get_request(contents, conn)
                 elif contents[1].lower() == "post":
-                    request = self.post_request(contents)
+                    self.post_request(contents, conn)
                 else:
-                    print("2")
                     goodrequest = False
             else:
                 goodrequest = False
-                print("1")
 
-            if goodrequest and nothelp:
-                request += "HTTP/1.0\r\nHost: " + str(self.host.get()) + "\r\n\r\n"
-                self.message.configure(text="Request accepted", foreground="green")
+            if goodrequest:
                 # line = self.request.get().rstrip("\r\n") + "HTTP/1.0\r\nHost: " + self.host.get() + "\r\n\r\n"
                 #        # + "\r\n" + "Content-Type: application/json\r\n"\
                 #        # + "Content-Length: 17\r\n\r\n{'Assignment': 1}"
-                conn.connect((self.host.get(), int(self.port.get())))
-                print(request)
-                request = request.encode("utf-8")
-                conn.send(request)
-                # MSG_WAITALL waits for full request or error
-                message = conn.recv(4096)
-                response = message.decode("utf-8")
-                response += "\n\n--------------------------------------------------------------------------\n\n"
-                self.response.insert(tkinter.END, str() + "\r\n")
+                self.message.configure(text="Request accepted", foreground="green")
             else:
                 self.message.configure(text="Request not accepted", foreground="red")
         finally:
