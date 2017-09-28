@@ -2,7 +2,7 @@ import socket
 import os
 import pygubu
 import tkinter
-import sys
+import argparse
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -92,9 +92,15 @@ class MyApplication(pygubu.TkApplication):
         request = request.encode("utf-8")
         conn.send(request)
         message = conn.recv(4096)
-        response = message.decode("utf-8")
+        splitter = message.decode("utf-8").split("\r\n\r\n")
+
+        if verbose:
+            response = splitter[0] + splitter[1]
+        else:
+            response = splitter[1]
+
         response += "\n\n--------------------------------------------------------------------------\n\n"
-        self.response.insert(tkinter.END, str(response)) n
+        self.response.insert(tkinter.END, str(response))
 
     def post_request(self, contents, conn):
         request = ""
