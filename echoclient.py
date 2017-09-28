@@ -2,7 +2,6 @@ import socket
 import os
 import pygubu
 import tkinter
-import argparse
 
 CURRENT_DIR = os.path.abspath(os.path.dirname(__file__))
 
@@ -18,7 +17,13 @@ class MyApplication(pygubu.TkApplication):
         self.host = builder.get_object('host_entry')
         self.port = builder.get_object('port_entry')
         self.response = builder.get_object('resp_text')
+        self.respscroll = builder.get_object("resp_scroll")
+        self.respscroll.configure(command=self.response.yview)
+        self.response['yscrollcommand'] = self.respscroll.set
         self.popular = builder.get_object("pop_text")
+        self.popscroll = builder.get_object("pop_scroll")
+        self.popscroll.configure(command=self.popular.xview)
+        self.popular['xscrollcommand'] = self.popscroll.set
         self.message = builder.get_object('msg_entry')
         self.message.configure(foreground="gray")
 
@@ -38,8 +43,6 @@ class MyApplication(pygubu.TkApplication):
     def help_request(self, contents):
         response = ""
 
-        print(len(contents))
-
         if len(contents) == 2:
             response = "httpc is a curl-like application but supports HTTP protocol only.\n\n" \
                        + "Usage: httpc command [arguments]\n\n" \
@@ -52,7 +55,7 @@ class MyApplication(pygubu.TkApplication):
             response = "Usage: httpc get [-v] [-h key:value] URL\n\n" \
                        + "Get executes a HTTP GET request for a given URL.\n\n" \
                        + "\t-v\tPrints the detail of the response such as protocol, status, and headers.\n" \
-                       + "\t-h key:value\t\tAssociates headers to HTTP request with the format 'key:value'.\n"
+                       + "\t-h key:value\t\tAssociates headers to HTTP request with the format 'key:value'.\n\n"
         elif contents[2].lower() == "post":
             response = "Usage: httpc  httpc post [-v] [-h key:value] [-d inline-data] [-f file] URL\n\n" \
                        + "Post executes a HTTP POST request for a given URL with inline data or from file.\n\n" \
@@ -69,37 +72,47 @@ class MyApplication(pygubu.TkApplication):
     def get_request(self, contents, conn):
         request = ""
         verbose = False
-        headers = False
-        print('in get')
+        headers = []
 
-        contents[1] = "GET"
+        request += "GET "
 
-        # CHECK HERE FOR BUGS AND SHIT
+        if "-v" in contents:
+            verbose = True
 
-        # if len(contents) > 2 and contents[2] == "-v":
-        #     verbose = True
-        #
-        # if contents[2] == "-h" or contents[3] == "-h":
-        #     headers = True
+        if "-h" in contents:
+            for x in range(contents.index("-h") + 1, len(contents) - 1):
+                if contents[x] != "-h" and contents[x] != "-v":
+                    splitter = contents[x].split(":")
+                    headers.append(str(splitter[0]) + ": " + str(splitter[1]))
 
-        contents.pop(0)
+        request += contents[len(contents) - 1]
 
-        for content in contents:
-            request += str(content) + " "
+        request += " HTTP/1.0\r\nHost: " + str(self.host.get()) + "\r\n\r\n"
 
-        request += "HTTP/1.0\r\nHost: " + str(self.host.get()) + "\r\n\r\n"
+        if len(headers) > 0:
+            request += "\r\n"
+
+            for header in headers:
+                request += str(header) + "\r\n"
+
+            request += "\r\n"
+
+        print(request)
+
         conn.connect((self.host.get(), int(self.port.get())))
         request = request.encode("utf-8")
         conn.send(request)
         message = conn.recv(4096)
+
         splitter = message.decode("utf-8").split("\r\n\r\n")
 
         if verbose:
-            response = splitter[0] + splitter[1]
+            response = splitter[0] + "\n\n" + splitter[1]
         else:
             response = splitter[1]
 
         response += "\n\n--------------------------------------------------------------------------\n\n"
+
         self.response.insert(tkinter.END, str(response))
 
     def post_request(self, contents, conn):
@@ -114,7 +127,7 @@ class MyApplication(pygubu.TkApplication):
         try:
             contents = self.request.get().rstrip("\r\n").split(" ")
 
-            print(contents[1])
+            print(contents)
 
             if contents[0].lower() == "httpc":
                 if contents[1].lower() == "help":

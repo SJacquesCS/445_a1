@@ -114,26 +114,6 @@
       </object>
     </child>
     <child>
-      <object class="tk.Text" id="resp_text">
-        <property name="blockcursor">false</property>
-        <property name="foreground">#000000</property>
-        <property name="height">30</property>
-        <property name="insertontime">200</property>
-        <property name="maxundo">0</property>
-        <property name="padx">0</property>
-        <property name="width">90</property>
-        <property name="wrap">word</property>
-        <layout>
-          <property name="column">1</property>
-          <property name="padx">2</property>
-          <property name="pady">2</property>
-          <property name="propagate">True</property>
-          <property name="row">4</property>
-          <property name="sticky">ew</property>
-        </layout>
-      </object>
-    </child>
-    <child>
       <object class="ttk.Button" id="clr_btn">
         <property name="command">clear</property>
         <property name="text" translatable="yes">Clear All</property>
@@ -201,36 +181,6 @@
       </object>
     </child>
     <child>
-      <object class="tk.Text" id="pop_text">
-        <property name="exportselection">true</property>
-        <property name="height">7</property>
-        <property name="insertborderwidth">0</property>
-        <property name="insertunfocussed">none</property>
-        <property name="insertwidth">0</property>
-        <property name="pady">0</property>
-        <property name="state">disabled</property>
-        <property name="takefocus">false</property>
-        <property name="text" translatable="yes">[Host: ] [Port: ]
-httpc help
-httpc help get
-httpc help post
-
-[Host: httpbin.org] [Port: 80]
-httpc GET http://httpbin.org/status/418</property>
-        <property name="width">48</property>
-        <property name="wrap">char</property>
-        <layout>
-          <property name="column">2</property>
-          <property name="padx">2</property>
-          <property name="pady">2</property>
-          <property name="propagate">True</property>
-          <property name="row">1</property>
-          <property name="rowspan">7</property>
-          <property name="sticky">ns</property>
-        </layout>
-      </object>
-    </child>
-    <child>
       <object class="ttk.Label" id="pop_label">
         <property name="text" translatable="yes">Popular:</property>
         <layout>
@@ -241,6 +191,110 @@ httpc GET http://httpbin.org/status/418</property>
           <property name="row">0</property>
           <property name="sticky">w</property>
         </layout>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="Frame_1">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout>
+          <property name="column">2</property>
+          <property name="padx">2</property>
+          <property name="pady">2</property>
+          <property name="propagate">True</property>
+          <property name="row">1</property>
+          <property name="rowspan">6</property>
+          <rows>
+            <row id="1">
+              <property name="pad">0</property>
+            </row>
+          </rows>
+        </layout>
+        <child>
+          <object class="tk.Text" id="pop_text">
+            <property name="exportselection">true</property>
+            <property name="height">37</property>
+            <property name="insertborderwidth">0</property>
+            <property name="insertontime">0</property>
+            <property name="insertunfocussed">solid</property>
+            <property name="insertwidth">0</property>
+            <property name="pady">0</property>
+            <property name="state">disabled</property>
+            <property name="tabstyle">tabular</property>
+            <property name="takefocus">false</property>
+            <property name="text" translatable="yes">[Host: ] [Port: ]
+httpc help
+httpc help get
+httpc help post
+
+[Host: httpbin.org] [Port: 80]
+httpc GET http://httpbin.org/status/418
+httpc GET -v http://httpbin.org/status/418
+httpc GET http://httpbin.org/get?course=networking&amp;assignment=1
+httpc GET -v http://httpbin.org/get?course=networking&amp;assignment=1
+
+httpc GET -h Content-Type:application/json http://httpbin.org/get</property>
+            <property name="width">46</property>
+            <property name="wrap">none</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="padx">0</property>
+              <property name="pady">0</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Scrollbar" id="pop_scroll">
+            <property name="orient">horizontal</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+              <property name="sticky">sew</property>
+            </layout>
+          </object>
+        </child>
+      </object>
+    </child>
+    <child>
+      <object class="ttk.Frame" id="Frame_2">
+        <property name="height">200</property>
+        <property name="width">200</property>
+        <layout>
+          <property name="column">1</property>
+          <property name="propagate">True</property>
+          <property name="row">4</property>
+        </layout>
+        <child>
+          <object class="tk.Text" id="resp_text">
+            <property name="blockcursor">false</property>
+            <property name="foreground">#000000</property>
+            <property name="height">30</property>
+            <property name="insertontime">200</property>
+            <property name="maxundo">0</property>
+            <property name="padx">0</property>
+            <property name="width">90</property>
+            <property name="wrap">word</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+            </layout>
+          </object>
+        </child>
+        <child>
+          <object class="ttk.Scrollbar" id="resp_scroll">
+            <property name="orient">vertical</property>
+            <layout>
+              <property name="column">0</property>
+              <property name="propagate">True</property>
+              <property name="row">0</property>
+              <property name="sticky">nse</property>
+            </layout>
+          </object>
+        </child>
       </object>
     </child>
   </object>
