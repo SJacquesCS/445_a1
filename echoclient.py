@@ -149,11 +149,11 @@ class MyApplication(pygubu.TkApplication):
                     break
                 contentlength += len(contents[x])
 
-                temp = contents[x].replace("'", "").rstrip("\r\n")
-                data.append(str(temp))
+                temp = contents[x].replace("'", "")
+                data.append(str(temp).rstrip("\r\n"))
 
             if "Content-Length" not in contents:
-                headers.append("Content-Length:" + str(contentlength))
+                headers.append("Content-Length: " + str(contentlength))
 
         request += contents[len(contents) - 1]
 
@@ -169,7 +169,7 @@ class MyApplication(pygubu.TkApplication):
             request += "\r\n"
 
             for datum in data:
-                request += str(datum)
+                request += str(datum) + "\r\n"
 
         request += "\r\n\r\n"
 
