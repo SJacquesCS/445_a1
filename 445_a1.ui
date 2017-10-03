@@ -220,7 +220,7 @@
             <property name="insertwidth">0</property>
             <property name="pady">0</property>
             <property name="state">disabled</property>
-            <property name="tabstyle">tabular</property>
+            <property name="tabstyle">wordprocessor</property>
             <property name="takefocus">false</property>
             <property name="text" translatable="yes">[Host: ] [Port: ]
 httpc help
@@ -229,11 +229,10 @@ httpc help post
 
 [Host: httpbin.org] [Port: 80]
 httpc GET http://httpbin.org/status/418
-httpc GET -v http://httpbin.org/status/418
+httpc GET http://httpbin.org/get
 httpc GET http://httpbin.org/get?course=networking&amp;assignment=1
-httpc GET -v http://httpbin.org/get?course=networking&amp;assignment=1
 
-httpc GET -h Content-Type:application/json http://httpbin.org/get</property>
+httpc post -h Content-Type:application/json -d '{"Assignment": 1}' http://httpbin.org/post</property>
             <property name="width">46</property>
             <property name="wrap">none</property>
             <layout>

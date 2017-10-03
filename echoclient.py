@@ -87,7 +87,7 @@ class MyApplication(pygubu.TkApplication):
 
         request += contents[len(contents) - 1]
 
-        request += " HTTP/1.0\r\nHost: " + str(self.host.get()) + "\r\n\r\n"
+        request += " HTTP/1.0\r\nHost: " + str(self.host.get())
 
         if len(headers) > 0:
             request += "\r\n"
@@ -95,7 +95,83 @@ class MyApplication(pygubu.TkApplication):
             for header in headers:
                 request += str(header) + "\r\n"
 
+        request += "\r\n\r\n"
+
+        print(request)
+
+        conn.connect((self.host.get(), int(self.port.get())))
+        request = request.encode("utf-8")
+        conn.send(request)
+        message = conn.recv(4096)
+
+        splitter = message.decode("utf-8").split("\r\n\r\n")
+
+        print(splitter)
+
+        if verbose:
+            response = splitter[0] + "\n\n" + splitter[1]
+        else:
+            response = splitter[1]
+
+        response += "\n\n--------------------------------------------------------------------------\n\n"
+
+        self.response.insert(tkinter.END, str(response))
+
+    def post_request(self, contents, conn):
+        request = ""
+        verbose = False
+        headers = []
+        data = []
+
+        request += "POST "
+
+        if "-v" in contents:
+            verbose = True
+
+        if "-h" in contents:
+            for x in range(contents.index("-h") + 1, len(contents) - 1):
+                if contents[x] == "-d"\
+                        or contents[x] == "-f"\
+                        or contents[x] == "-h"\
+                        or contents[x] == "-v":
+                    break
+
+                splitter = contents[x].split(":")
+                headers.append(str(splitter[0]) + ": " + str(splitter[1]))
+
+        if "-d" in contents:
+            contentlength = 0
+            for x in range(contents.index("-d") + 1, len(contents) - 1):
+                if contents[x] == "-d"\
+                        or contents[x] == "-f"\
+                        or contents[x] == "-h"\
+                        or contents[x] == "-v":
+                    break
+                contentlength += len(contents[x])
+
+                temp = contents[x].replace("'", "").rstrip("\r\n")
+                data.append(str(temp))
+
+            if "Content-Length" not in contents:
+                headers.append("Content-Length:" + str(contentlength))
+
+        request += contents[len(contents) - 1]
+
+        request += " HTTP/1.0\r\nHost: " + str(self.host.get())
+
+        if len(headers) > 0:
             request += "\r\n"
+
+            for header in headers:
+                request += str(header) + "\r\n"
+
+        if len(data) > 0:
+            request += "\r\n"
+
+            for datum in data:
+                request += str(datum)
+
+        request += "\r\n\r\n"
 
         print(request)
 
@@ -112,16 +188,10 @@ class MyApplication(pygubu.TkApplication):
             response = splitter[1]
 
         response += "\n\n--------------------------------------------------------------------------\n\n"
-
+        # https: // httpbin.org / redirect / 6
         self.response.insert(tkinter.END, str(response))
 
-    def post_request(self, contents, conn):
-        request = ""
-
-        return request
-
     def send_request(self):
-        goodrequest = nothelp = True
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
 
         try:
@@ -132,23 +202,12 @@ class MyApplication(pygubu.TkApplication):
             if contents[0].lower() == "httpc":
                 if contents[1].lower() == "help":
                     self.help_request(contents)
-                    nothelp = False
                 elif contents[1].lower() == "get":
                     self.get_request(contents, conn)
                 elif contents[1].lower() == "post":
                     self.post_request(contents, conn)
-                else:
-                    goodrequest = False
-            else:
-                goodrequest = False
 
-            if goodrequest:
-                # line = self.request.get().rstrip("\r\n") + "HTTP/1.0\r\nHost: " + self.host.get() + "\r\n\r\n"
-                #        # + "\r\n" + "Content-Type: application/json\r\n"\
-                #        # + "Content-Length: 17\r\n\r\n{'Assignment': 1}"
-                self.message.configure(text="Request accepted", foreground="green")
-            else:
-                self.message.configure(text="Request not accepted", foreground="red")
+            self.message.configure(text="Request accepted", foreground="green")
         finally:
             conn.close()
 
