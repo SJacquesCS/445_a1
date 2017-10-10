@@ -232,9 +232,9 @@ httpc GET http://httpbin.org/status/418
 httpc GET http://httpbin.org/get
 httpc GET http://httpbin.org/get?course=networking&amp;assignment=1
 
-httpc POST http://httpbin.org/post
-httpc POST -h Content-Type:application/json -d '{"Assignment": 1}' http://httpbin.org/post
-httpc POST -f testfile.txt -o testoutput.txt http://httpbin.org/post</property>
+httpc post -h Content-Type:application/json -d '{"Assignment": 1}' http://httpbin.org/post
+
+</property>
             <property name="width">46</property>
             <property name="wrap">none</property>
             <layout>

@@ -74,24 +74,16 @@ class MyApplication(pygubu.TkApplication):
         verbose = False
         headers = []
 
-        for content in contents:
-            print(content)
-
         request += "GET "
 
         if "-v" in contents:
             verbose = True
 
         if "-h" in contents:
-
             for x in range(contents.index("-h") + 1, len(contents) - 1):
-                if contents[x] == "-h"\
-                        or contents[x] == "-v"\
-                        or contents[x] == "-o":
-                    break
-
-                splitter = contents[x].split(":")
-                headers.append(str(splitter[0]) + ": " + str(splitter[1]))
+                if contents[x] != "-h" and contents[x] != "-v":
+                    splitter = contents[x].split(":")
+                    headers.append(str(splitter[0]) + ": " + str(splitter[1]))
 
         request += contents[len(contents) - 1]
 
@@ -107,6 +99,7 @@ class MyApplication(pygubu.TkApplication):
 
         print(request)
 
+        conn.connect((self.host.get(), int(self.port.get())))
         request = request.encode("utf-8")
         conn.send(request)
         message = conn.recv(4096)
@@ -122,24 +115,7 @@ class MyApplication(pygubu.TkApplication):
 
         response += "\n\n--------------------------------------------------------------------------\n\n"
 
-        if "302 FOUND" in splitter[0]:
-            redirectcontent = contents[len(contents) - 1].split("/")
-            newcontent = splitter[0].split(" ")
-
-            for x in range(0, len(newcontent)):
-                if "relative-redirect" in newcontent[x]:
-                    url = newcontent[x].split("\r\n")
-
-            redirect = ["httpc", "GET", "http://" + redirectcontent[2] + url[0]]
-
-            self.get_request(redirect, conn)
-
-        else:
-            self.response.insert(tkinter.END, str(response))
-
-            if "-o" in contents:
-                file = open(contents[contents.index("-o") + 1], 'w')
-                file.write(response)
+        self.response.insert(tkinter.END, str(response))
 
     def post_request(self, contents, conn):
         request = ""
@@ -157,8 +133,7 @@ class MyApplication(pygubu.TkApplication):
                 if contents[x] == "-d"\
                         or contents[x] == "-f"\
                         or contents[x] == "-h"\
-                        or contents[x] == "-v" \
-                        or contents[x] == "-o":
+                        or contents[x] == "-v":
                     break
 
                 splitter = contents[x].split(":")
@@ -170,24 +145,12 @@ class MyApplication(pygubu.TkApplication):
                 if contents[x] == "-d"\
                         or contents[x] == "-f"\
                         or contents[x] == "-h"\
-                        or contents[x] == "-v" \
-                        or contents[x] == "-o":
+                        or contents[x] == "-v":
                     break
                 contentlength += len(contents[x])
 
                 temp = contents[x].replace("'", "").rstrip("\r\n")
                 data.append(str(temp))
-
-            if "Content-Length" not in contents:
-                headers.append("Content-Length:" + str(contentlength))
-        elif "-f" in contents:
-            contentlength = 0
-
-            file = open(contents[contents.index("-f") + 1], 'r')
-
-            for line in file:
-                contentlength += len(line);
-                data.append(str(line))
 
             if "Content-Length" not in contents:
                 headers.append("Content-Length:" + str(contentlength))
@@ -212,6 +175,7 @@ class MyApplication(pygubu.TkApplication):
 
         print(request)
 
+        conn.connect((self.host.get(), int(self.port.get())))
         request = request.encode("utf-8")
         conn.send(request)
         message = conn.recv(4096)
@@ -224,21 +188,11 @@ class MyApplication(pygubu.TkApplication):
             response = splitter[1]
 
         response += "\n\n--------------------------------------------------------------------------\n\n"
-
-        if "302 FOUND" in splitter[0]:
-            print("End of contents " + contents[len(contents)])
-            # self.post_request(contents, conn)
-
+        # https: // httpbin.org / redirect / 6
         self.response.insert(tkinter.END, str(response))
-
-        if "-o" in contents:
-            file = open(contents[contents.index("-o") + 1], 'w')
-            file.write(response)
 
     def send_request(self):
         conn = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        conn.connect((self.host.get(), int(self.port.get())))
 
         try:
             contents = self.request.get().rstrip("\r\n").split(" ")
